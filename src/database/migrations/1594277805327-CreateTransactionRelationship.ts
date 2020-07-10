@@ -1,0 +1,22 @@
+import { MigrationInterface, QueryRunner, TableForeignKey } from 'typeorm';
+
+export default class CreateTransactionRelationship1594277805327
+  implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<any> {
+    await queryRunner.createForeignKey(
+      'transactions',
+      new TableForeignKey({
+        name: 'TransactionCategory',
+        columnNames: ['category_id'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'category',
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE',
+      }),
+    );
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<any> {
+    await queryRunner.dropForeignKey('transactions', 'TransactionCategory');
+  }
+}
