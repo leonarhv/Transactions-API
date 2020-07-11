@@ -4,6 +4,7 @@ import { getCustomRepository, getRepository } from 'typeorm';
 import Transaction from '../models/Transaction';
 import TransactionsRepository from '../repositories/TransactionsRepository';
 import Category from '../models/Category';
+import AppError from '../errors/AppError';
 
 interface Request {
   title: string;
@@ -22,25 +23,32 @@ class CreateTransactionService {
     const transactionRepository = getCustomRepository(TransactionsRepository);
     const categoryRepository = getRepository(Category);
 
-    const transaction = transactionRepository.create({
-      title,
-      value,
-      type,
-    });
+    const balance = await transactionRepository.getBalance();
 
-    const categoryFound = await categoryRepository.findOne({
+    if (type === 'outcome' && value > balance.total) {
+      throw new AppError('Invalid outcome value.', 400);
+    }
+
+    let transactionCategory = await categoryRepository.findOne({
       where: {
         title: category,
       },
     });
 
-    if (categoryFound) {
-      transaction.category_id = categoryFound.id;
-    } else {
-      const categoryCreated = categoryRepository.create({ title: category });
-      await categoryRepository.save(categoryCreated);
-      transaction.category_id = categoryCreated.id;
+    if (!transactionCategory) {
+      transactionCategory = categoryRepository.create({
+        title: category,
+      });
     }
+
+    await categoryRepository.save(transactionCategory);
+
+    const transaction = transactionRepository.create({
+      title,
+      value,
+      type,
+      category: transactionCategory,
+    });
 
     await transactionRepository.save(transaction);
 
