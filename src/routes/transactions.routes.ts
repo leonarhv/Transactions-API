@@ -52,14 +52,14 @@ transactionsRouter.delete('/:id', async (request, response) => {
 
 transactionsRouter.post(
   '/import',
-  upload.single('transactions'),
+  upload.single('file'),
   async (request, response) => {
     const importTransaction = new ImportTransactionsService();
 
     const transactions = await importTransaction.execute({
       fileName: request.file.filename,
     });
-    return response.json({ ok: ':)' });
+    return response.json(transactions);
   },
 );
 
